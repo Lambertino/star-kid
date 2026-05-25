@@ -1,0 +1,32 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #000011;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+#game-container {
+    position: relative;
+    display: inline-block;
+    line-height: 0;
+}
+
+#gameCanvas {
+    display: block;
+    /* Crisp pixel rendering — critical for pixel art look */
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    image-rendering: -moz-crisp-edges;
+    cursor: none;
+    /* Subtle outer glow for the space feel */
+    box-shadow: 0 0 40px rgba(68, 136, 255, 0.3), 0 0 80px rgba(68, 136, 255, 0.1);
+}

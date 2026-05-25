@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Académie des Étoiles — Jeu Éducatif</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+
+    <!-- Load order matters: dependencies first -->
+    <script src="src/input.js"></script>
+    <script src="src/audio.js"></script>
+    <script src="src/puzzleEngine.js"></script>
+    <script src="src/sprites.js"></script>
+    <script src="src/player.js"></script>
+    <script src="src/scenes/introScene.js"></script>
+    <script src="src/scenes/selectionScene.js"></script>
+    <script src="src/scenes/mapScene.js"></script>
+    <script src="src/scenes/battleScene.js"></script>
+    <script src="src/gameEngine.js"></script>
+    <script src="src/main.js"></script>
+</body>
+</html>
