@@ -18,7 +18,7 @@ IntroScene.prototype.enter = function () {
         'dans une galaxie lointaine...',
         '',
         '',
-        '— ACADÉMIE DES ÉTOILES —',
+        '— STAR KID —',
         '',
         "L'EMPIRE DES DONNÉES a lancé",
         'ses armées de droïdes contre',
@@ -106,20 +106,20 @@ IntroScene.prototype._renderLogo = function (ctx, W, H) {
     ctx.shadowColor = '#4488ff';
     ctx.shadowBlur = 30;
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 52px "Courier New"';
+    ctx.font = 'bold 72px "Courier New"';
     ctx.textAlign = 'center';
-    ctx.fillText('ACADÉMIE', W / 2, H / 2 - 20);
+    ctx.fillText('STAR', W / 2, H / 2 - 10);
 
     ctx.shadowColor = '#FFD700';
-    ctx.shadowBlur = 20;
+    ctx.shadowBlur = 24;
     ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 30px "Courier New"';
-    ctx.fillText('DES ÉTOILES', W / 2, H / 2 + 20);
+    ctx.font = 'bold 72px "Courier New"';
+    ctx.fillText('KID', W / 2, H / 2 + 65);
 
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#aaaaaa';
     ctx.font = '16px "Courier New"';
-    ctx.fillText('Apprends en sauvant la Galaxie', W / 2, H / 2 + 60);
+    ctx.fillText('Apprends en sauvant la Galaxie', W / 2, H / 2 + 105);
 
     ctx.restore();
 
@@ -196,7 +196,7 @@ IntroScene.prototype._renderCrawl = function (ctx, W, H) {
 
         var line = this.crawlLines[i];
         // Title line in larger text
-        if (line.indexOf('ACADÉMIE') !== -1) {
+        if (line.indexOf('STAR KID') !== -1) {
             ctx.font = 'bold 30px "Courier New"';
             ctx.fillStyle = '#ffffff';
             ctx.shadowColor = '#4488ff';
