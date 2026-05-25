@@ -34,12 +34,14 @@ MapScene.prototype.enter = function () {
 
     // Enemies — tile positions, with puzzle subjects cycling
     this.enemies = [
-        { tx:4,  ty:6,  type:'stormtrooper', defeated:false, subject:'math',   pulse:0 },
-        { tx:15, ty:3,  type:'droid',        defeated:false, subject:'french',  pulse:1 },
-        { tx:6,  ty:13, type:'stormtrooper', defeated:false, subject:'logic',   pulse:2 },
-        { tx:19, ty:10, type:'droid',        defeated:false, subject:'math',    pulse:3 },
-        { tx:22, ty:6,  type:'stormtrooper', defeated:false, subject:'french',  pulse:0 },
+        { tx:4,  ty:6,  type:'stormtrooper', defeated:false, subject:'math',   pulse:0, deathTimer:0, name:'Commandant Calcul' },
+        { tx:15, ty:3,  type:'droid',        defeated:false, subject:'french',  pulse:1, deathTimer:0, name:'Droïde Grammaire' },
+        { tx:6,  ty:13, type:'stormtrooper', defeated:false, subject:'logic',   pulse:2, deathTimer:0, name:'Sergent Logique' },
+        { tx:19, ty:10, type:'droid',        defeated:false, subject:'math',    pulse:3, deathTimer:0, name:'Droïde Équation' },
+        { tx:22, ty:6,  type:'stormtrooper', defeated:false, subject:'french',  pulse:0, deathTimer:0, name:'Capitaine Syntaxe' },
     ];
+
+    this.nearDefeatedEnemy = null;
 
     // Total enemies needed to defeat to unlock exit
     this.totalEnemies = this.enemies.length;
@@ -130,6 +132,17 @@ MapScene.prototype.update = function (dt) {
             this.engine.pendingEnemy = enemy;
             this.engine.changeScene('battle');
             return;
+        }
+    }
+
+    // Track nearest fully-dead enemy for name dialogue
+    this.nearDefeatedEnemy = null;
+    var ptxd = Player.tileX(), ptyd = Player.tileY();
+    for (var j = 0; j < this.enemies.length; j++) {
+        var de = this.enemies[j];
+        if (de.defeated && de.deathTimer === 0) {
+            var ddist = Math.abs(de.tx - ptxd) + Math.abs(de.ty - ptyd);
+            if (ddist <= 2) { this.nearDefeatedEnemy = de; break; }
         }
     }
 
@@ -304,25 +317,47 @@ MapScene.prototype.render = function (ctx) {
     // Draw player
     Player.draw(ctx, this.engine.playerData.character, camX, camY);
 
-    // Exit door highlight
+    // Exit door highlight + NIVEAU 2 label
     if (defeated === this.totalEnemies) {
         var glow = 0.5 + 0.5 * Math.sin(this.time * 3);
+        var exitCX = 23 * ts - camX + ts / 2;
+        var exitCY = 3  * ts - camY + ts / 2;
+
         ctx.save();
         ctx.shadowColor = '#00aaff';
         ctx.shadowBlur = 30 * glow;
         ctx.fillStyle = 'rgba(0,170,255,' + (glow * 0.3) + ')';
         ctx.beginPath();
-        ctx.arc(23 * ts - camX + ts / 2, 3 * ts - camY + ts / 2, 24, 0, Math.PI * 2);
+        ctx.arc(exitCX, exitCY, 24, 0, Math.PI * 2);
         ctx.fill();
+        ctx.restore();
+
+        // "★ NIVEAU 2 ★" label above the exit
+        var pulse = 0.7 + 0.3 * Math.sin(this.time * 3);
+        ctx.save();
+        ctx.globalAlpha = pulse;
+        ctx.shadowColor = '#FFD700';
+        ctx.shadowBlur = 16;
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 13px "Courier New"';
+        ctx.textAlign = 'center';
+        ctx.fillText('★ NIVEAU 2 ★', exitCX, exitCY - 32);
+        ctx.shadowBlur = 0;
         ctx.restore();
     }
 
     // HUD
     this._renderHUD(ctx, W, H, defeated);
 
-    // Guide banner — points to next enemy after a won battle
-    if (this.showGuide && this.guideTimer > 0) {
-        this._renderEnemyGuide(ctx, W, H, camX, camY);
+    // Defeated enemy dialogue — shown when player walks near a ghost
+    if (this.nearDefeatedEnemy) {
+        this._renderDefeatedMessage(ctx, W, H, defeated);
+    }
+
+    // Guide banner — points to next enemy; permanent once all are defeated
+    var allDefeated = (defeated === this.totalEnemies);
+    if ((this.showGuide && this.guideTimer > 0) || allDefeated) {
+        this._renderEnemyGuide(ctx, W, H, camX, camY, allDefeated);
     }
 
     // Tutorial overlay
@@ -453,6 +488,38 @@ MapScene.prototype._renderTutorial = function (ctx, W, H) {
     }
 };
 
+// ── Defeated enemy name dialogue ─────────────────────────────────────────────
+
+MapScene.prototype._renderDefeatedMessage = function (ctx, W, H, defeatedCount) {
+    var enemy = this.nearDefeatedEnemy;
+    var allDefeated = (defeatedCount === this.totalEnemies);
+    var line2 = allDefeated ? 'Rejoins la porte de sortie !' : 'Affronte l\'ennemi suivant !';
+
+    var bw = 420, bh = 62;
+    var bx = (W - bw) / 2, by = Math.round(H * 0.62);
+
+    ctx.fillStyle = 'rgba(0,8,22,0.93)';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.strokeStyle = '#ff6666';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(bx, by, bw, bh);
+
+    // Icon
+    ctx.fillStyle = '#ff6666';
+    ctx.font = '18px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕', bx + 26, by + 26);
+
+    ctx.fillStyle = '#ffbbbb';
+    ctx.font = 'bold 13px "Courier New"';
+    ctx.textAlign = 'center';
+    ctx.fillText('Tu as vaincu ' + enemy.name + ' !', W / 2, by + 24);
+
+    ctx.fillStyle = '#aaddff';
+    ctx.font = '12px "Courier New"';
+    ctx.fillText(line2, W / 2, by + 46);
+};
+
 // ── Helper: nearest undefeated enemy ─────────────────────────────────────────
 
 MapScene.prototype._nearestEnemy = function () {
@@ -468,7 +535,7 @@ MapScene.prototype._nearestEnemy = function () {
 
 // ── Guide banner: shown after winning a battle ────────────────────────────────
 
-MapScene.prototype._renderEnemyGuide = function (ctx, W, H, camX, camY) {
+MapScene.prototype._renderEnemyGuide = function (ctx, W, H, camX, camY, allDefeated) {
     var nearest = this._nearestEnemy();
 
     var SUBJECT = {
@@ -477,8 +544,8 @@ MapScene.prototype._renderEnemyGuide = function (ctx, W, H, camX, camY) {
         logic:  { label:'LOGIQUE',  color:'#88ff88', icon:'🧩' },
     };
 
-    // Fade out in the last 2 seconds
-    var fadeAlpha = Math.min(1, this.guideTimer / 1.5);
+    // Fade out in the last 2 seconds — but stay solid when all enemies are defeated
+    var fadeAlpha = allDefeated ? 1 : Math.min(1, this.guideTimer / 1.5);
     var ts = this.TILE_SIZE;
 
     ctx.save();

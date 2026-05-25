@@ -8,6 +8,7 @@ IntroScene.prototype.enter = function () {
     this.phase = 'logo'; // 'logo' → 'crawl'
     this.logoTimer = 0;
     this.crawlY = -600;  // starts off-screen bottom
+    this.crawlDone = false;
     this.stars = Sprites.generateStars(200, 800, 600);
     this.introPlayed = false;
 
@@ -55,14 +56,17 @@ IntroScene.prototype.update = function (dt) {
             Audio.playIntroTheme();
             this.introPlayed = true;
         }
-        if (this.logoTimer > 3.5 || Input.wasPressed('Enter') || Input.wasPressed('Space')) {
+        if (Input.wasPressed('Enter') || Input.wasPressed('Space')) {
             this.phase = 'crawl';
         }
     } else if (this.phase === 'crawl') {
-        this.crawlY += 40 * dt; // scroll speed
-
-        var done = this.crawlY > this.crawlLines.length * 36 + 200;
-        if (done || Input.wasPressed('Enter') || Input.wasPressed('Space')) {
+        if (!this.crawlDone) {
+            this.crawlY += 40 * dt; // scroll speed
+            if (this.crawlY > this.crawlLines.length * 36 + 200) {
+                this.crawlDone = true;
+            }
+        }
+        if (Input.wasPressed('Enter') || Input.wasPressed('Space')) {
             Audio.resume();
             Audio.playConfirm();
             this.engine.changeScene('selection');
@@ -117,14 +121,14 @@ IntroScene.prototype._renderLogo = function (ctx, W, H) {
     ctx.font = '16px "Courier New"';
     ctx.fillText('Apprends en sauvant la Galaxie', W / 2, H / 2 + 60);
 
-    // Press Enter prompt (blink)
-    var blink = Math.sin(this.time * 3) > 0 ? 1 : 0;
-    ctx.globalAlpha = a * blink * 0.8;
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '14px "Courier New"';
-    ctx.fillText('Appuyez sur ENTRÉE pour continuer', W / 2, H - 50);
-
     ctx.restore();
+
+    // Press Enter prompt — outside fading block so it stays visible
+    var blink = Math.sin(this.time * 3) > 0 ? 1 : 0;
+    ctx.fillStyle = 'rgba(255,255,255,' + (blink * 0.85) + ')';
+    ctx.font = '14px "Courier New"';
+    ctx.textAlign = 'center';
+    ctx.fillText('⏎  Appuyez sur ENTRÉE pour continuer', W / 2, H - 50);
 };
 
 IntroScene.prototype._drawGalaxySymbol = function (ctx, cx, cy, r) {
@@ -224,9 +228,20 @@ IntroScene.prototype._renderCrawl = function (ctx, W, H) {
     ctx.fillRect(0, H - 80, W, 80);
 
     // Press Enter prompt
-    if (this.crawlY > 150) {
-        var alpha = 0.5 + 0.5 * Math.sin(this.time * 2.5);
-        ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
+    var promptAlpha = 0.5 + 0.5 * Math.sin(this.time * 2.5);
+    if (this.crawlDone) {
+        // Crawl finished — prominent CTA, no more auto-advance
+        ctx.fillStyle = 'rgba(0,0,17,0.9)';
+        ctx.fillRect(W / 2 - 230, H - 40, 460, 30);
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(W / 2 - 230, H - 40, 460, 30);
+        ctx.fillStyle = 'rgba(255,215,0,' + promptAlpha + ')';
+        ctx.font = 'bold 14px "Courier New"';
+        ctx.textAlign = 'center';
+        ctx.fillText('⏎  ENTRÉE — Commencer l\'aventure !', W / 2, H - 20);
+    } else if (this.crawlY > 150) {
+        ctx.fillStyle = 'rgba(255,255,255,' + (promptAlpha * 0.6) + ')';
         ctx.font = '14px "Courier New"';
         ctx.textAlign = 'center';
         ctx.fillText('ENTRÉE — passer', W / 2, H - 12);
